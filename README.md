@@ -1,51 +1,116 @@
-# Product Research — Claude Code Skill
+# Product Research
 
-A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skill for deep product analysis and company capital intelligence. Systematically dissects consumer/tech/internet products while uncovering the company's equity structure, funding history, ultimate controllers, investor networks, and capital dynamics.
+> Claude Code Skill — 产品调研与公司资本情报分析
 
-## What It Does
+对消费级/科技/互联网产品进行全方位拆解，系统挖掘产品背后的公司股权结构、融资历史、实际控制人、投资人网络及资本博弈逻辑。输出结构化调研报告。
 
-```
-1. Confirm target  -->  2. Web research  -->  3. Company structure
-      |                      |                       |
-      v                      v                       v
-4. Capital analysis  -->  5. Product deep-dive  -->  6. Generate report
-      |                                                    |
-      v                                                    v
-7. Save to vault  -->  8. (Optional) Feishu sync  -->  9. Git commit
-```
-
-Given a product or company name, this skill:
-
-1. **Confirms the target** — anti-confusion mechanism for same-name products
-2. **Researches from 20+ data sources** with credibility-ranked priority (P0-P3)
-3. **Maps the complete equity chain** — product -> operating entity -> holding company -> ultimate controller
-4. **Analyzes capital structure** — funding rounds, investors, valuation estimates
-5. **Deep-dives the product** from two perspectives:
-   - **Investor view**: TAM-SAM-SOM, Business Model Canvas, Porter's Five Forces, Bull/Bear cases
-   - **Product view**: User personas, AARRR funnel, Jobs-to-be-Done, competitive comparison
-6. **Generates a structured 7-section report** in Markdown
-7. **Optionally syncs to Feishu** (Lark) documents
-
-## Usage
+## Quick Start
 
 ```bash
-# Natural language
+# 1. 安装：克隆到 Claude Code skills 目录
+git clone https://github.com/AsterZephyr/product-research-skill.git
+ln -s $(pwd)/product-research-skill ~/.claude/skills/product-research
+
+# 2. 重启 Claude Code
+
+# 3. 使用
+> /product-research TapNow
 > 调研一下 TapNow 这个产品
 > 帮我分析一下这家公司的融资情况
-
-# Slash command with options
-> /product-research TapNow --save-path work/AIMO-TeCH --feishu
-
-# With insider info
-> /product-research TapNow --known-info "融资 3000-5000 万，红杉领投"
 ```
 
-## Report Structure
-
-The skill outputs a structured Markdown report with 7 sections:
+## 工作流程
 
 ```
+输入                    分析                    输出
+─────────────────    ─────────────────    ─────────────────
+产品/公司名      ──→  确认目标（反混淆）
+                      │
+已知 URL         ──→  多源信息采集（P0-P3）
+                      │                     7 节结构化报告
+内部信息（可选）  ──→  公司结构 + 股权穿透  ──→    │
+                      │                       ├─→ 本地 Markdown
+                      资本分析 + 产品拆解       ├─→ 飞书文档（可选）
+                      │                       └─→ Git commit
+                      双视角深度分析
+                      (投资人 + 产品)
+```
+
+## 核心能力
+
+### 1. 反混淆机制
+
+同名产品极为常见。真实案例："TapNow" 同时是日本社交 App（Sango Technologies）和深圳 AI 创作引擎（添科智能科技）。Crunchbase 指向了错误实体。
+
+本技能强制执行验证链：**产品官网 → 运营主体 → 工商信息** ，确认后才展开分析。
+
+### 2. 分级信息源
+
+按可信度分 4 级，每个数据点标注出处：
+
+| 级别 | 类别 | 来源 | 用途 |
+|------|------|------|------|
+| **P0** | 上市公司文件 | SEC EDGAR、港交所、上交所/深交所 | 财务数据、股权结构 |
+| **P0** | 工商数据 | 天眼查、企查查、国家企业信用信息公示 | 股权穿透、实控人、对外投资 |
+| **P1** | 投融资数据库 | IT桔子、烯牛、Crunchbase、PitchBook | 融资轮次、估值、投资人 |
+| **P1** | 产品数据 | SimilarWeb、Sensor Tower、G2 | 流量、下载量、评价 |
+| **P2** | 深度报道 | 36氪、晚点、虎嗅、财新、Bloomberg | 行业分析、内幕 |
+| **P3** | 专利数据 | Google Patents、智慧芽 | 技术壁垒验证 |
+
+**原则**：论坛讨论（雪球帖子、股吧）只能作为线索，不能作为事实依据，必须通过 P0-P2 交叉验证。
+
+### 3. 股权穿透
+
+每份报告包含完整的控制链：
+
+```
+最终控制人 / 母公司
+  └─ 中间控股实体（持股比例）
+       └─ 运营主体（注册地、成立时间、注册资本、法人）
+            └─ 产品品牌
+```
+
+### 4. 双视角分析
+
+**投资人视角**：
+
+| 框架 | 分析内容 |
+|------|---------|
+| TAM-SAM-SOM | 三层市场规模估算 |
+| Business Model Canvas | 商业模式九要素 |
+| Porter's Five Forces | 竞争格局五力分析 |
+| Bull / Bear Case | 看多 vs 看空论点，均衡呈现 |
+
+**产品视角**：
+
+| 框架 | 分析内容 |
+|------|---------|
+| User Persona | 3-4 个目标用户画像 |
+| AARRR Funnel | 获客 → 激活 → 留存 → 变现 → 推荐 |
+| Jobs-to-be-Done | 用户核心需求拆解 |
+| Competitive Matrix | 竞品功能/定位对比（至少 3 个） |
+
+详细框架说明见 `references/analysis-frameworks.md`。
+
+### 5. 搜索降级策略
+
+Web 搜索工具经常受限，技能内置级联回退：
+
+```
+WebSearch（快） → WebFetch（直连 URL） → Playwright + DuckDuckGo（兜底）
+```
+
+中国商业数据库（天眼查、企查查）几乎必触验证码。应对方案：从新闻报道、SEC 文件、港交所披露中提取工商信息。
+
+## 报告结构
+
+```markdown
 # [产品名] 产品调研报告
+
+> 调研日期：2026-04-18
+> 产品官网：https://example.com
+
+---
 
 ## 一、公司概览
    1.1 公司实体（含股权穿透链）
@@ -53,151 +118,93 @@ The skill outputs a structured Markdown report with 7 sections:
    1.3 产品演进时间线
 
 ## 二、融资与估值
-   2.1 公开融资信息 + 母公司财务状况
-   2.2 非公开投资信息（来源 + 置信度标注）
+   2.1 公开融资信息 + 母公司财务
+   2.2 非公开投资信息（标注来源和置信度）
    2.3 估值推算（融资反推法）
    2.4 待确认信息清单
 
 ## 三、产品分析
    3.1 产品定位
-   3.2 核心能力矩阵（Capability-Modality Matrix）
+   3.2 核心能力矩阵
    3.3 差异化功能
-   3.4 集成/技术栈
+   3.4 技术栈 / 集成
 
-## 四、投资人视角分析
-   4.1 TAM-SAM-SOM 市场规模
-   4.2 商业模式画布（BMC）
-   4.3 竞争格局（Porter's Five Forces）
-   4.4 投资亮点与风险（Bull/Bear Case）
-
-## 五、产品视角分析
-   5.1 用户画像（User Persona）
-   5.2 AARRR 漏斗
-   5.3 Jobs-to-be-Done
-   5.4 竞品对比矩阵
-
-## 六、市场数据与商业模式
-   6.1 用户与流量数据
-   6.2 定价策略
-   6.3 知名客户案例
-
+## 四、投资人视角（TAM-SAM-SOM / BMC / Porter / Bull-Bear）
+## 五、产品视角（Persona / AARRR / JTBD / 竞品对比）
+## 六、市场数据与商业模式（流量、定价、客户案例）
 ## 七、结论与建议
 ```
 
-## Data Source Priority
+## 使用方式
 
-Sources are ranked by credibility and structure. The skill annotates every data point with its source.
+```bash
+# 基本用法
+> /product-research TapNow
 
-| Priority | Category | Sources | Use For |
-|----------|----------|---------|---------|
-| **P0** | Public filings | SEC EDGAR, HKEX, SSE/SZSE | Financial data, equity structure |
-| **P0** | Business registry | Tianyancha, Qichacha, NECIPS | Equity penetration, controllers, investments |
-| **P1** | VC databases | IT Juzi, Xiniudata, Crunchbase, PitchBook | Funding rounds, valuations, investors |
-| **P1** | Product data | SimilarWeb, Sensor Tower, G2, Product Hunt | Traffic, downloads, user reviews |
-| **P2** | Media reports | 36Kr, LatePost, Huxiu, Caixin, Bloomberg, Reuters | Industry analysis, insider reporting |
-| **P3** | Patents | Google Patents, Zhihuiya | Technology moat verification |
+# 指定保存路径
+> /product-research TapNow --save-path work/AIMO-TeCH
 
-Forum discussions (Xueqiu posts, Eastmoney) are **never** used as sole evidence — only as leads that must be cross-verified through P0-P2 sources.
+# 同步到飞书
+> /product-research TapNow --feishu
 
-## Key Design Decisions
+# 提供内部信息（会单独标注置信度）
+> /product-research TapNow --known-info "融资 3000-5000 万，红杉领投"
 
-### Anti-Confusion Mechanism
-
-Same-name products are extremely common. Real example: "TapNow" is simultaneously a Japanese Gen-Z social app (Sango Technologies) and a Chinese AI creation engine (Shenzhen Tianke Intelligent Technology). Crunchbase/Dealroom pointed to the wrong entity.
-
-The skill forces identity confirmation through: **product URL -> operating entity -> business registry** before starting any analysis.
-
-### Search Degradation Strategy
-
-Web research tools are frequently blocked. The skill uses a cascading fallback:
-
-```
-WebSearch (fast) -> WebFetch (direct URL) -> Playwright + DuckDuckGo (fallback)
+# 自然语言也可以
+> 帮我调研一下这家公司的背景和融资情况
+> 做个竞品分析
 ```
 
-Chinese business databases (Tianyancha, Qichacha, Aiqicha) almost always trigger CAPTCHAs. The skill works around this by extracting registry data from secondary sources: news articles citing Tianyancha, SEC filings, HKEX disclosures.
-
-### Non-Public Information Handling
-
-When users provide insider info (funding amounts, investor names from private sources), the skill:
-- Tags it separately with source and confidence level
-- Never mixes it with verified public data
-- Uses it as a lead for targeted verification
-- Maintains a "pending confirmation" checklist
-
-### Equity Chain Template
-
-Every report includes a complete ownership chain:
-
-```
-Ultimate Controller / Parent Company
-  └─ Intermediate Holding Entity (shareholding %)
-       └─ Operating Entity (registration, capital, legal rep)
-            └─ Product Brand
-```
-
-## Analysis Frameworks
-
-Detailed framework specifications are in `references/analysis-frameworks.md`:
-
-| Framework | Section | Purpose |
-|-----------|---------|---------|
-| TAM-SAM-SOM | Investor view | Market size estimation (3 layers) |
-| Business Model Canvas | Investor view | 9-element business model analysis |
-| Porter's Five Forces | Investor view | Competitive landscape assessment |
-| Bull/Bear Case | Investor view | Balanced investment thesis |
-| User Persona | Product view | 3-4 target user archetypes |
-| AARRR Funnel | Product view | Growth metrics analysis |
-| Jobs-to-be-Done | Product view | Core user need decomposition |
-| Competitive Matrix | Product view | Feature/positioning comparison |
-| Unit Economics | Optional | CAC, LTV, margins (if data available) |
-
-## Project Structure
+## 项目结构
 
 ```
 product-research-skill/
-├── SKILL.md                           # Main skill definition (9-step workflow)
+├── SKILL.md                         # 技能主文件（9步工作流定义）
 ├── references/
-│   └── analysis-frameworks.md         # Detailed analysis framework specs
+│   └── analysis-frameworks.md       # 分析框架详细规范
+├── .gitignore
 ├── LICENSE
 └── README.md
 ```
 
-## Installation
+## 环境要求
 
-### Option 1: Copy
+| 依赖 | 用途 | 必需 |
+|------|------|------|
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | 技能运行环境 | Yes |
+| Playwright MCP Server | 搜索降级时的浏览器自动化 | No |
+| [feishu-cli](https://github.com/nicepkg/feishu-cli) | 飞书文档同步 | No |
+| 天眼查 / Crunchbase 账号 | 更深入的数据覆盖 | No |
+
+无需 API Key 或付费服务。技能使用公开可用的数据源。
+
+## 安装
+
+### 方式一：Symlink（推荐，方便更新）
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/product-research-skill.git
-cp -r product-research-skill ~/.claude/skills/product-research
-```
-
-### Option 2: Symlink (recommended for development)
-
-```bash
-git clone https://github.com/YOUR_USERNAME/product-research-skill.git
+git clone https://github.com/AsterZephyr/product-research-skill.git
 ln -s $(pwd)/product-research-skill ~/.claude/skills/product-research
 ```
 
-Restart Claude Code after installation. The skill triggers on "调研一下这个产品", "公司背景调查", `/product-research`, etc.
+### 方式二：直接复制
 
-## Prerequisites
+```bash
+git clone https://github.com/AsterZephyr/product-research-skill.git
+cp -r product-research-skill ~/.claude/skills/product-research
+```
 
-- **Claude Code** with WebSearch, WebFetch, and Bash tools
-- Optional: **Playwright MCP server** for degraded search scenarios
-- Optional: **[feishu-cli](https://github.com/nicepkg/feishu-cli)** for Feishu document sync
+安装后重启 Claude Code 即可。
 
-No API keys or paid services are required. The skill uses publicly available data sources. For deeper analysis, having accounts on Tianyancha, Crunchbase, or PitchBook will improve data coverage.
+## 什么是 Claude Code Skill
 
-## How Claude Code Skills Work
+Skill 是基于 Markdown 的指令集，用于扩展 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 的能力：
 
-Skills are Markdown-based instruction sets that extend Claude Code:
+- **YAML frontmatter**（`name` + `description`）始终在上下文中，用于触发匹配
+- **SKILL.md 正文** 在技能触发时加载，包含完整工作流
+- **references/** 按需加载，提供补充文档
 
-1. **Metadata** (`name` + `description` in YAML frontmatter) is always in context — used for trigger matching
-2. **SKILL.md body** loads when the skill triggers — contains the full workflow
-3. **References** (`references/`) load on-demand when referenced by the skill
-
-See [Claude Code Skills Documentation](https://docs.anthropic.com/en/docs/claude-code/skills) for details.
+详见 [Claude Code Skills 官方文档](https://docs.anthropic.com/en/docs/claude-code/skills)。
 
 ## License
 
